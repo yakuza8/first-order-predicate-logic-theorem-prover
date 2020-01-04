@@ -1,5 +1,5 @@
 import unittest
-from typing import List
+from typing import List, Optional
 
 from src.entity import BLOCK_OPEN_SYMBOL, ENTITY_SEPARATE_SYMBOL, BLOCK_CLOSE_SYMBOL, NEGATION_SYMBOL
 from src.entity.first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
@@ -22,10 +22,10 @@ class Predicate(FirstOrderPredicateLogicEntity):
 
     def __str__(self):
         return ('' if not self.is_negated else NEGATION_SYMBOL) + self.name + \
-               '(' + ','.join(repr(child) for child in self.children) + ')'
+               BLOCK_OPEN_SYMBOL + ENTITY_SEPARATE_SYMBOL.join(repr(child) for child in self.children) + BLOCK_CLOSE_SYMBOL
 
     @staticmethod
-    def validate(value: str) -> bool:
+    def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
         import src.entity.constant as c
         import src.entity.function as f
         import src.entity.variable as v
@@ -45,55 +45,55 @@ class Predicate(FirstOrderPredicateLogicEntity):
             if predicate_name.isalnum() and predicate_name[0].islower():
                 children = value[first_open_block_index + 1: last_close_block_index].split(ENTITY_SEPARATE_SYMBOL)
                 # Inside of a predicate there must be these entities only
-                return all(f.Function.validate(child) or v.Variable.validate(child) or c.Constant.validate(child)
-                           for child in children)
-            else:
-                return False
+                built_children = [f.Function.build(child) or v.Variable.build(child) or c.Constant.build(child) for child in children]
+                if all(built_children):
+                    return Predicate(predicate_name, built_children, is_negated)
+            return None
         except (ValueError, IndexError):
-            return False
+            return None
 
 
 class PredicateUnitTest(unittest.TestCase):
     
-    def test_validate_open_block_symbol(self):
+    def test_build_open_block_symbol(self):
         predicate = 'px,y)))'
-        self.assertFalse(Predicate.validate(predicate))
+        self.assertFalse(Predicate.build(predicate))
 
-    def test_validate_close_block_symbol(self):
+    def test_build_close_block_symbol(self):
         predicate = 'p(((x,y'
-        self.assertFalse(Predicate.validate(predicate))
+        self.assertFalse(Predicate.build(predicate))
 
-    def test_validate_zero_length_predicate_name(self):
+    def test_build_zero_length_predicate_name(self):
         predicate = '(a,b,c,f(a))'
-        self.assertFalse(Predicate.validate(predicate))
+        self.assertFalse(Predicate.build(predicate))
 
-    def test_validate_invalid_predicate_name(self):
+    def test_build_invalid_predicate_name(self):
         predicate1 = 'A(a,b,c,f(a))'
-        self.assertFalse(Predicate.validate(predicate1))
+        self.assertFalse(Predicate.build(predicate1))
 
         predicate2 = 'p A (a,b,c,f(a))'
-        self.assertFalse(Predicate.validate(predicate2))
+        self.assertFalse(Predicate.build(predicate2))
 
-    def test_validate_valid_predicate(self):
+    def test_build_valid_predicate(self):
         predicate1 = 'p(a,b,c,g(a))'
-        self.assertTrue(Predicate.validate(predicate1))
+        self.assertTrue(Predicate.build(predicate1))
 
         predicate2 = '~p(a,b,c,g(a))'
-        self.assertTrue(Predicate.validate(predicate2))
+        self.assertTrue(Predicate.build(predicate2))
 
-    def test_validate_valid_predicate_with_spaces(self):
+    def test_build_valid_predicate_with_spaces(self):
         predicate = ' ~  p (  a , b , c ,   g (  a  )    )         '
-        self.assertTrue(Predicate.validate(predicate))
+        self.assertTrue(Predicate.build(predicate))
 
-    def test_validate_invalid_children(self):
+    def test_build_invalid_children(self):
         predicate1 = '  p ( a , b , c A ,   g (  a  )    )         '
-        self.assertFalse(Predicate.validate(predicate1))
+        self.assertFalse(Predicate.build(predicate1))
 
         predicate2 = '  p ( a , b, , cA ,   g (  a  )    )         '
-        self.assertFalse(Predicate.validate(predicate2))
+        self.assertFalse(Predicate.build(predicate2))
 
-        predicate3 = '  p ( a , b, , cA ,   g ( ( a  )    )         '
-        self.assertFalse(Predicate.validate(predicate3))
+        predicate3 = '  p ( a , b, , cA ,   g (  a  )    )         '
+        self.assertFalse(Predicate.build(predicate3))
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from typing import Optional
 
 
 class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
@@ -13,5 +14,5 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def validate(value: str) -> bool:
+    def build(value: str) -> Optional['FirstOrderPredicateLogicEntity']:
         pass
