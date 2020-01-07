@@ -1,7 +1,7 @@
 import unittest
 from typing import List, Optional
 
-from src.entity import BLOCK_OPEN_SYMBOL, ENTITY_SEPARATE_SYMBOL, BLOCK_CLOSE_SYMBOL
+from src.entity import BLOCK_OPEN_SYMBOL, ENTITY_SEPARATE_SYMBOL, BLOCK_CLOSE_SYMBOL, children_entity_parser
 from src.entity.first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
 
 
@@ -35,7 +35,9 @@ class Function(FirstOrderPredicateLogicEntity):
             function_name = value[:first_open_block_index].strip()
             # It should be alphanumeric and must be start with lower case
             if function_name.isalnum() and function_name[0].islower():
-                children = value[first_open_block_index + 1: last_close_block_index].split(ENTITY_SEPARATE_SYMBOL)
+                children = children_entity_parser(value[first_open_block_index + 1: last_close_block_index])
+                if children is None:
+                    return None
                 # Inside of a function there must be these entities only
                 built_children = [Function.build(child) or v.Variable.build(child) or c.Constant.build(child) for child in children]
                 if all(built_children):
@@ -67,12 +69,26 @@ class FunctionUnitTest(unittest.TestCase):
         self.assertFalse(Function.build(function2))
 
     def test_build_valid_function(self):
-        function = 'f(a,b,c,g(a))'
-        self.assertTrue(Function.build(function))
+        function1 = 'f(a,b,c,g(a))'
+        output1 = Function.build(function1)
+        self.assertTrue(output1)
+        self.assertEqual(4, len(output1.children))
+
+        function2 = 'f(a,b,c,g(a, b, c))'
+        output2 = Function.build(function2)
+        self.assertTrue(output2)
+        self.assertEqual(4, len(output2.children))
+
+        function3 = 'f(a,h(h(h(h(a, h(a, b))))),c,g(a))'
+        output3 = Function.build(function3)
+        self.assertTrue(output3)
+        self.assertEqual(4, len(output3.children))
 
     def test_build_valid_function_with_spaces(self):
         function = '  f( a , b , c ,   g (  a  )    )         '
-        self.assertTrue(Function.build(function))
+        output = Function.build(function)
+        self.assertTrue(output)
+        self.assertEqual(4, len(output.children))
 
     def test_build_invalid_children(self):
         function1 = '  f( a , b , c A ,   g (  a  )    )         '
