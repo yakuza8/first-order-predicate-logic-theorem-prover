@@ -1,0 +1,10 @@
+{
+    "knowledge_base": [
+        "p(A,f(t))",
+        "q(z),~p(z,f(B))",
+        "~q(y),r(y)"
+    ],
+    "negated_theorem_predicates": [
+        "~r(A)"
+    ]
+}
