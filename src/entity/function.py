@@ -10,7 +10,6 @@ class Function(FirstOrderPredicateLogicEntity):
     Functions are the entities which are pretty similar to predicates, but they cannot be negated
     and take other functions as its children. Their names should start with lower case letter.
     """
-
     def __init__(self, name: str, children: List[FirstOrderPredicateLogicEntity]):
         self.name = name
         self.children = children

@@ -37,6 +37,20 @@ class MostGeneralUnifier(object):
               expression2: Union[FirstOrderPredicateLogicEntity, List[FirstOrderPredicateLogicEntity]]) -> \
             Tuple[bool, Optional[Substitution]]:
         """
+        Unification Procedure
+        =====================
+        The following procedure is applied while unification:
+
+        1) First check whether both expressions are atomic element or not. If so, then redirect them into unification of atomic elements
+        2) If both of them are composite entities, then
+            * Check whether they meet length property. If they cannot, then return FAIL
+            * Else apply the following operations
+                * Fetch first elements of each composite
+                * Unify them and get result. If result says that they cannot be unifiable, then return FAIL
+                * If they can be, then apply substitution to rest of composites and check whether rest can be unifiable
+                * In case of non-unifiable entities, then FAIL, otherwise compose this substitution with the previous
+                substitution and return the composite substitution
+
         :param expression1: The first expression as a first order predicate logic entity
         :param expression2: The second expression as a first order predicate logic entity
         :return: Composition result of expression in case of SUCCESS otherwise None in case of FAILURE

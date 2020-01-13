@@ -8,7 +8,6 @@ class Constant(FirstOrderPredicateLogicEntity):
     """
     Constants are also atomic values whose names start with an upper case letter.
     """
-
     def __init__(self, name: str):
         self.name = name
 

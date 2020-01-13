@@ -11,7 +11,6 @@ class Predicate(FirstOrderPredicateLogicEntity):
     One or more than one entity can be child of predicates. Also, they can be negated with '~'.
     Their names should start with lower case letter.
     """
-
     def __init__(self, name: str, children: List[FirstOrderPredicateLogicEntity], is_negated: bool = False):
         self.name = name
         self.children = children

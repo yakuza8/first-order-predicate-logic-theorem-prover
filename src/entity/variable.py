@@ -8,7 +8,6 @@ class Variable(FirstOrderPredicateLogicEntity):
     """
     Variables are atomic values whose names start with a lower case letter.
     """
-
     def __init__(self, name: str):
         self.name = name
 
