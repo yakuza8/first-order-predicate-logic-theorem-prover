@@ -24,9 +24,12 @@ class Function(FirstOrderPredicateLogicEntity):
 
     def __eq__(self, other):
         if not isinstance(other, Function):
-            return NotImplemented
+            return False
         return self.get_name() == other.get_name() and len(self.get_child()) == len(other.get_child()) \
             and all([child_tuple[0] == child_tuple[1] for child_tuple in zip(self.get_child(), other.get_child())])
+
+    def __contains__(self, item):
+        return self == item or any([item in child for child in self.children])
 
     def get_name(self) -> str:
         return self.name
@@ -73,6 +76,38 @@ class FunctionUnitTest(unittest.TestCase):
         self.assertTrue(function.has_child())
         self.assertIsNotNone(function.get_child())
         self.assertEqual(4, len(function.get_child()))
+
+    def test_equality(self):
+        function1 = Function.build('f(a,b,c,g(a))')
+        function2 = Function.build('f(a,b,c,g(a))')
+        function3 = Function.build('f(a,b,c,g(b))')
+
+        self.assertEqual(function1, function2)
+        self.assertNotEqual(function1, function3)
+
+    def test_in_operator(self):
+        import src.entity.constant as c
+        import src.entity.variable as v
+
+        function1 = Function.build('f(a,B,c,g(a))')
+        function2 = Function.build('f(a,B,c,g(a))')
+        function3 = Function.build('f(a,B,c,g(x))')
+
+        constant1 = c.Constant.build('B')
+        variable1 = v.Variable.build('b')
+        constant2 = c.Constant.build('A')
+        variable2 = v.Variable.build('a')
+        function4 = Function.build('g(a)')
+        function5 = Function.build('g(y)')
+
+        self.assertTrue(function2 in function1)
+        self.assertFalse(function3 in function1)
+        self.assertTrue(constant1 in function1)
+        self.assertFalse(variable1 in function1)
+        self.assertFalse(constant2 in function1)
+        self.assertTrue(variable2 in function1)
+        self.assertTrue(function4 in function1)
+        self.assertFalse(function5 in function1)
 
     def test_build_open_block_symbol(self):
         function = 'fx,y)))'

@@ -101,9 +101,17 @@ class MostGeneralUnifier(object):
         type_expression1 = type(expression1)
         type_expression2 = type(expression2)
         if type_expression1 == Variable or type_expression2 == Variable:
+            if expression1 == expression2:
+                # If they are the same, then return EMPTY_SUBSTITUTION
+                return True, None
             if type_expression1 == Variable:
+                if expression1 in expression2:
+                    return False, None
                 return True, Substitution(expression2, expression1)
-            return True, Substitution(expression1, expression2)
+            else:
+                if expression2 in expression1:
+                    return False, None
+                return True, Substitution(expression1, expression2)
         elif type_expression1 != type_expression2:
             # If none of them variable and their types are not the same, then fail unification
             return False, None
@@ -122,7 +130,8 @@ class MostGeneralUnifier(object):
                 raise ValueError('Unknown type for unification.')
 
     @staticmethod
-    def apply_substitution(elements: List[FirstOrderPredicateLogicEntity], substitution: Substitution):
+    def apply_substitution(elements: List[FirstOrderPredicateLogicEntity], substitution: Substitution) -> \
+            List[FirstOrderPredicateLogicEntity]:
         pass
 
     @staticmethod

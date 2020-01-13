@@ -20,8 +20,11 @@ class Variable(FirstOrderPredicateLogicEntity):
 
     def __eq__(self, other):
         if not isinstance(other, Variable):
-            return NotImplemented
+            return False
         return self.get_name() == other.get_name()
+
+    def __contains__(self, item):
+        return self == item
 
     def get_name(self) -> str:
         return self.name
@@ -52,6 +55,22 @@ class VariableUnitTest(unittest.TestCase):
         self.assertEqual(variable_str, variable.get_name())
         self.assertFalse(variable.has_child())
         self.assertIsNone(variable.get_child())
+        
+    def test_equality(self):
+        variable1 = Variable.build('abc')
+        variable2 = Variable.build('abc')
+        variable3 = Variable.build('abc2')
+
+        self.assertEqual(variable1, variable2)
+        self.assertNotEqual(variable1, variable3)
+
+    def test_in_operator(self):
+        variable1 = Variable.build('abc')
+        variable2 = Variable.build('abc')
+        variable3 = Variable.build('abc2')
+
+        self.assertTrue(variable1 in variable2)
+        self.assertFalse(variable1 in variable3)
 
     def test_build_is_lower(self):
         variable1 = 'abc1'

@@ -26,10 +26,13 @@ class Predicate(FirstOrderPredicateLogicEntity):
 
     def __eq__(self, other):
         if not isinstance(other, Predicate):
-            return NotImplemented
+            return False
         return self.get_name() == other.get_name() and self.is_negated == other.is_negated \
             and len(self.get_child()) == len(other.get_child()) \
             and all([child_tuple[0] == child_tuple[1] for child_tuple in zip(self.get_child(), other.get_child())])
+
+    def __contains__(self, item):
+        return self == item or any([item in child for child in self.children])
 
     def get_name(self) -> str:
         return self.name
@@ -81,6 +84,45 @@ class PredicateUnitTest(unittest.TestCase):
         self.assertTrue(predicate.has_child())
         self.assertIsNotNone(predicate.get_child())
         self.assertEqual(4, len(predicate.get_child()))
+
+    def test_equality(self):
+        predicate1 = Predicate.build('f(a,b,c,g(a))')
+        predicate2 = Predicate.build('f(a,b,c,g(a))')
+        predicate3 = Predicate.build('~f(a,b,c,g(a))')
+        predicate4 = Predicate.build('f(a,b,c,g(b))')
+
+        self.assertEqual(predicate1, predicate2)
+        self.assertNotEqual(predicate1, predicate3)
+        self.assertNotEqual(predicate1, predicate4)
+
+    def test_in_operator(self):
+        import src.entity.constant as c
+        import src.entity.function as f
+        import src.entity.variable as v
+
+        predicate1 = Predicate.build('f(a,B,c,g(a))')
+        predicate2 = Predicate.build('f(a,B,c,g(a))')
+        predicate3 = Predicate.build('f(a,B,c,g(x))')
+
+        constant1 = c.Constant.build('B')
+        variable1 = v.Variable.build('b')
+        constant2 = c.Constant.build('A')
+        variable2 = v.Variable.build('a')
+        function1 = f.Function.build('g(a)')
+        function2 = f.Function.build('g(y)')
+        predicate4 = Predicate.build('g(a)')
+        predicate5 = Predicate.build('g(y)')
+
+        self.assertTrue(predicate2 in predicate1)
+        self.assertFalse(predicate3 in predicate1)
+        self.assertTrue(constant1 in predicate1)
+        self.assertFalse(variable1 in predicate1)
+        self.assertFalse(constant2 in predicate1)
+        self.assertTrue(variable2 in predicate1)
+        self.assertTrue(function1 in predicate1)
+        self.assertFalse(function2 in predicate1)
+        self.assertFalse(predicate4 in predicate1)
+        self.assertFalse(predicate5 in predicate1)
 
     def test_build_open_block_symbol(self):
         predicate = 'px,y)))'

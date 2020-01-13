@@ -20,8 +20,11 @@ class Constant(FirstOrderPredicateLogicEntity):
 
     def __eq__(self, other):
         if not isinstance(other, Constant):
-            return NotImplemented
+            return False
         return self.get_name() == other.get_name()
+
+    def __contains__(self, item):
+        return self == item
 
     def get_name(self) -> str:
         return self.name
@@ -52,6 +55,22 @@ class ConstantUnitTest(unittest.TestCase):
         self.assertEqual(constant_str, constant.get_name())
         self.assertFalse(constant.has_child())
         self.assertIsNone(constant.get_child())
+
+    def test_equality(self):
+        constant1 = Constant.build('Abc')
+        constant2 = Constant.build('Abc')
+        constant3 = Constant.build('Abc2')
+
+        self.assertEqual(constant1, constant2)
+        self.assertNotEqual(constant1, constant3)
+
+    def test_in_operator(self):
+        constant1 = Constant.build('Abc')
+        constant2 = Constant.build('Abc')
+        constant3 = Constant.build('Abc2')
+
+        self.assertTrue(constant1 in constant2)
+        self.assertFalse(constant1 in constant3)
 
     def test_build_is_lower(self):
         constant1 = 'abc1'

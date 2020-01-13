@@ -17,6 +17,10 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def __contains__(self, item):
+        pass
+
+    @abstractmethod
     def get_name(self) -> str:
         pass
 
