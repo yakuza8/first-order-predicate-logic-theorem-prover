@@ -13,6 +13,10 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def __eq__(self, other):
+        pass
+
+    @abstractmethod
     def get_name(self) -> str:
         pass
 

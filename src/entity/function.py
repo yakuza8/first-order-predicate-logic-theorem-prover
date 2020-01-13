@@ -22,6 +22,12 @@ class Function(FirstOrderPredicateLogicEntity):
         return self.name + BLOCK_OPEN_SYMBOL \
                + ENTITY_SEPARATE_SYMBOL.join(repr(child) for child in self.children) + BLOCK_CLOSE_SYMBOL
 
+    def __eq__(self, other):
+        if not isinstance(other, Function):
+            return NotImplemented
+        return self.get_name() == other.get_name() and len(self.get_child()) == len(other.get_child()) \
+            and all([child_tuple[0] == child_tuple[1] for child_tuple in zip(self.get_child(), other.get_child())])
+
     def get_name(self) -> str:
         return self.name
 
@@ -48,7 +54,8 @@ class Function(FirstOrderPredicateLogicEntity):
                 if children is None:
                     return None
                 # Inside of a function there must be these entities only
-                built_children = [Function.build(child) or v.Variable.build(child) or c.Constant.build(child) for child in children]
+                built_children = [Function.build(child) or v.Variable.build(child) or c.Constant.build(child) for child
+                                  in children]
                 if all(built_children):
                     return Function(function_name, built_children)
             return None

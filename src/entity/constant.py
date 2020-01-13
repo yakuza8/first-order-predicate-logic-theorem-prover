@@ -18,6 +18,11 @@ class Constant(FirstOrderPredicateLogicEntity):
     def __str__(self):
         return self.name
 
+    def __eq__(self, other):
+        if not isinstance(other, Constant):
+            return NotImplemented
+        return self.get_name() == other.get_name()
+
     def get_name(self) -> str:
         return self.name
 
