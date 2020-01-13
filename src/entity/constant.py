@@ -1,5 +1,5 @@
 import unittest
-from typing import Optional
+from typing import Optional, List
 
 from src.entity.first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
 
@@ -18,6 +18,15 @@ class Constant(FirstOrderPredicateLogicEntity):
     def __str__(self):
         return self.name
 
+    def get_name(self) -> str:
+        return self.name
+
+    def has_child(self) -> bool:
+        return False
+
+    def get_child(self) -> Optional[List[FirstOrderPredicateLogicEntity]]:
+        return None
+
     @staticmethod
     def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
         try:
@@ -30,6 +39,14 @@ class Constant(FirstOrderPredicateLogicEntity):
 
 
 class ConstantUnitTest(unittest.TestCase):
+
+    def test_basic_properties(self):
+        constant_str = 'Abc1'
+        constant = Constant.build(constant_str)
+
+        self.assertEqual(constant_str, constant.get_name())
+        self.assertFalse(constant.has_child())
+        self.assertIsNone(constant.get_child())
 
     def test_build_is_lower(self):
         constant1 = 'abc1'

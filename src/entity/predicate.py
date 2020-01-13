@@ -24,6 +24,15 @@ class Predicate(FirstOrderPredicateLogicEntity):
         return ('' if not self.is_negated else NEGATION_SYMBOL) + self.name + \
                BLOCK_OPEN_SYMBOL + ENTITY_SEPARATE_SYMBOL.join(repr(child) for child in self.children) + BLOCK_CLOSE_SYMBOL
 
+    def get_name(self) -> str:
+        return self.name
+
+    def has_child(self) -> bool:
+        return True
+
+    def get_child(self) -> Optional[List[FirstOrderPredicateLogicEntity]]:
+        return self.children
+
     @staticmethod
     def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
         import src.entity.constant as c
@@ -56,7 +65,16 @@ class Predicate(FirstOrderPredicateLogicEntity):
 
 
 class PredicateUnitTest(unittest.TestCase):
-    
+
+    def test_basic_properties(self):
+        predicate_str = '~p(a,b,c,g(a))'
+        predicate = Predicate.build(predicate_str)
+
+        self.assertEqual('p', predicate.get_name())
+        self.assertTrue(predicate.has_child())
+        self.assertIsNotNone(predicate.get_child())
+        self.assertEqual(4, len(predicate.get_child()))
+
     def test_build_open_block_symbol(self):
         predicate = 'px,y)))'
         self.assertFalse(Predicate.build(predicate))
