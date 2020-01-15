@@ -68,6 +68,7 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         :param substitute: Substitution to be applied
         :param variable: Variable to be replaced
         """
+        pass
 
     @staticmethod
     @abstractmethod
