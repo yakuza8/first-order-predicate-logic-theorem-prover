@@ -75,12 +75,14 @@ class MostGeneralUnifier(object):
         type_expression2 = type(expression2)
 
         # If both of them are atomic entities
-        if type_expression1 != List or type_expression2 != List:
+        if type_expression1 != list or type_expression2 != list:
             return MostGeneralUnifier._unify_atomic_entity(expression1, expression2)
-        elif type_expression1 == List or type_expression2 == List:
+        elif type_expression1 == list or type_expression2 == list:
             # They have to be of the same length
             if len(expression1) != len(expression2):
                 return False, None
+            if len(expression1) == 0:
+                return True, []
 
             first_element_of_expression1 = expression1[0]
             rest_of_children_of_expression1 = expression1[1:]
@@ -162,9 +164,18 @@ class MostGeneralUnifier(object):
                 raise ValueError('Unknown type for unification.')
 
     @staticmethod
-    def apply_substitution(elements: List[FirstOrderPredicateLogicEntity], substitution: List[Substitution]) -> \
+    def apply_substitution(elements: List[FirstOrderPredicateLogicEntity], substitutions: List[Substitution]) -> \
             List[FirstOrderPredicateLogicEntity]:
-        pass
+        """
+        Apply all the substitutions to the given list of entities
+        """
+        for index, element in enumerate(elements):
+            for substitution in substitutions:
+                if element == substitution.variable:
+                    elements[index] = substitution.substitute
+                else:
+                    element.find_variable_and_apply_substitution(substitution.substitute, substitution.variable)
+        return elements
 
     @staticmethod
     def apply_composition_to_substitution(first_substitutions: List[Substitution],
@@ -278,3 +289,38 @@ class MGUUnitTest(unittest.TestCase):
         output = MostGeneralUnifier.apply_composition_to_substitution(output, third_substitution)
         output = MostGeneralUnifier.apply_composition_to_substitution(output, fourth_substitution)
         self.assertEqual(expected, output)
+
+    def test_apply_substitution_1(self):
+        expression = Function.build('p(x, A)').get_child()
+        substitutions = [
+            Substitution(Variable.build('y'), Variable.build('x'))
+        ]
+        expected = [Variable.build('y'), Constant.build('A')]
+        self.assertEqual(expected, MostGeneralUnifier.apply_substitution(expression, substitutions))
+
+    def test_apply_substitution_2(self):
+        expression1 = Function.build('p(f(x), y, g(y ,x))').get_child()
+        expression2 = Function.build('p(u, k(u), g(z, h(w)))').get_child()
+        substitutions = [
+            Substitution(Function.build('f(h(w))'), Variable.build('u')),
+            Substitution(Function.build('k(f(h(w)))'), Variable.build('y')),
+            Substitution(Function.build('k(f(h(w)))'), Variable.build('z')),
+            Substitution(Function.build('h(w)'), Variable.build('x'))
+        ]
+        expected = Function.build('p(f(h(w)), k(f(h(w))), g(k(f(h(w))), h(w)))').get_child()
+        self.assertEqual(expected, MostGeneralUnifier.apply_substitution(expression1, substitutions))
+        self.assertEqual(expected, MostGeneralUnifier.apply_substitution(expression2, substitutions))
+
+    def test_unification_1(self):
+        expression1 = Function.build('p(f(x), y, g(y ,x))')
+        expression2 = Function.build('p(u, k(u), g(z, h(w)))')
+
+        _, unification_substitution = MostGeneralUnifier.unify(expression1, expression2)
+        expected_substitutions = [
+            Substitution(Function.build('f(h(w))'), Variable.build('u')),
+            Substitution(Function.build('k(f(h(w)))'), Variable.build('y')),
+            Substitution(Function.build('k(f(h(w)))'), Variable.build('z')),
+            Substitution(Function.build('h(w)'), Variable.build('x'))
+        ]
+
+        self.assertEqual(expected_substitutions, unification_substitution)
