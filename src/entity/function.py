@@ -39,6 +39,14 @@ class Function(FirstOrderPredicateLogicEntity):
     def get_child(self) -> Optional[List[FirstOrderPredicateLogicEntity]]:
         return self.children
 
+    def find_variable_and_apply_substitution(self, substitute: 'FirstOrderPredicateLogicEntity',
+                                             variable: 'FirstOrderPredicateLogicEntity'):
+        for index, value in enumerate(self.children):
+            if value == variable:
+                self.children[index] = substitute
+            elif value.has_child:
+                value.find_variable_and_apply_substitution(substitute, variable)
+
     @staticmethod
     def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
         import src.entity.constant as c

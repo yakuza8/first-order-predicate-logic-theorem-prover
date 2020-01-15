@@ -34,6 +34,10 @@ class Constant(FirstOrderPredicateLogicEntity):
     def get_child(self) -> Optional[List[FirstOrderPredicateLogicEntity]]:
         return None
 
+    def find_variable_and_apply_substitution(self, substitute: 'FirstOrderPredicateLogicEntity',
+                                             variable: 'FirstOrderPredicateLogicEntity'):
+        pass
+
     @staticmethod
     def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
         try:

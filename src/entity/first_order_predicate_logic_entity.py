@@ -60,6 +60,15 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         """
         pass
 
+    @abstractmethod
+    def find_variable_and_apply_substitution(self, substitute: 'FirstOrderPredicateLogicEntity',
+                                             variable: 'FirstOrderPredicateLogicEntity'):
+        """
+        Method to apply substitution to an entity
+        :param substitute: Substitution to be applied
+        :param variable: Variable to be replaced
+        """
+
     @staticmethod
     @abstractmethod
     def build(value: str) -> Optional['FirstOrderPredicateLogicEntity']:

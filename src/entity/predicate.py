@@ -27,8 +27,8 @@ class Predicate(FirstOrderPredicateLogicEntity):
         if not isinstance(other, Predicate):
             return False
         return self.get_name() == other.get_name() and self.is_negated == other.is_negated \
-            and len(self.get_child()) == len(other.get_child()) \
-            and all([child_tuple[0] == child_tuple[1] for child_tuple in zip(self.get_child(), other.get_child())])
+               and len(self.get_child()) == len(other.get_child()) \
+               and all([child_tuple[0] == child_tuple[1] for child_tuple in zip(self.get_child(), other.get_child())])
 
     def __contains__(self, item):
         return self == item or any([item in child for child in self.children])
@@ -42,12 +42,20 @@ class Predicate(FirstOrderPredicateLogicEntity):
     def get_child(self) -> Optional[List[FirstOrderPredicateLogicEntity]]:
         return self.children
 
+    def find_variable_and_apply_substitution(self, substitute: 'FirstOrderPredicateLogicEntity',
+                                             variable: 'FirstOrderPredicateLogicEntity'):
+        for index, value in enumerate(self.children):
+            if value == variable:
+                self.children[index] = substitute
+            elif value.has_child:
+                value.find_variable_and_apply_substitution(substitute, variable)
+
     @staticmethod
     def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
         import src.entity.constant as c
         import src.entity.function as f
         import src.entity.variable as v
-        
+
         try:
             # Remove whitespaces beginning and end of the string 
             value = value.strip()
