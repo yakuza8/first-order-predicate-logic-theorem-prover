@@ -35,13 +35,14 @@ class MostGeneralUnifier(object):
     @staticmethod
     def unify(expression1: Union[FirstOrderPredicateLogicEntity, List[FirstOrderPredicateLogicEntity]],
               expression2: Union[FirstOrderPredicateLogicEntity, List[FirstOrderPredicateLogicEntity]]) -> \
-            Tuple[bool, Optional[Substitution]]:
+            Tuple[bool, Optional[List[Substitution]]]:
         """
         Unification Procedure
         =====================
         The following procedure is applied while unification:
 
-        1) First check whether both expressions are atomic element or not. If so, then redirect them into unification of atomic elements
+        1) First check whether both expressions are atomic element or not. If so, then redirect them into unification of
+         atomic elements
         2) If both of them are composite entities, then
             * Check whether they meet length property. If they cannot, then return FAIL
             * Else apply the following operations
@@ -72,7 +73,8 @@ class MostGeneralUnifier(object):
             rest_of_children_of_expression2 = expression2[1:]
 
             # Get substitution result of the first elements
-            result, substitution = MostGeneralUnifier._unify_atomic_entity(first_element_of_expression1, first_element_of_expression2)
+            result, substitutions = MostGeneralUnifier\
+                ._unify_atomic_entity(first_element_of_expression1, first_element_of_expression2)
 
             # If it is unsuccessful, then propagate this information
             if not result:
@@ -80,24 +82,25 @@ class MostGeneralUnifier(object):
 
             # Apply retrieved substitution to the rest of entities
             substitution_applied_rest_of_expression1 = MostGeneralUnifier.apply_substitution(
-                rest_of_children_of_expression1, substitution)
+                rest_of_children_of_expression1, substitutions)
             substitution_applied_rest_of_expression2 = MostGeneralUnifier.apply_substitution(
-                rest_of_children_of_expression2, substitution)
+                rest_of_children_of_expression2, substitutions)
 
-            result, unification_of_rest = MostGeneralUnifier.unify(substitution_applied_rest_of_expression1, substitution_applied_rest_of_expression2)
+            result, unification_of_rest = MostGeneralUnifier\
+                .unify(substitution_applied_rest_of_expression1, substitution_applied_rest_of_expression2)
 
             if not result:
                 return False, None
             else:
                 # Compose both obtained unification substitutions to each other and then return as a result
-                return True, MostGeneralUnifier.apply_composition_to_substitution(substitution, unification_of_rest)
+                return True, MostGeneralUnifier.apply_composition_to_substitution(substitutions, unification_of_rest)
         else:
             # They cannot be unifiable
             return False, None
 
     @staticmethod
     def _unify_atomic_entity(expression1: FirstOrderPredicateLogicEntity,
-                             expression2: FirstOrderPredicateLogicEntity) -> Tuple[bool, Optional[Substitution]]:
+                             expression2: FirstOrderPredicateLogicEntity) -> Tuple[bool, Optional[List[Substitution]]]:
         """
         Unification of single entity type of First Order Predicate Logic
         Unification may be done in the following entities:
@@ -117,22 +120,22 @@ class MostGeneralUnifier(object):
         if type_expression1 == Variable or type_expression2 == Variable:
             if expression1 == expression2:
                 # If they are the same, then return EMPTY_SUBSTITUTION
-                return True, None
+                return True, []
             if type_expression1 == Variable:
                 if expression1 in expression2:
                     return False, None
-                return True, Substitution(expression2, expression1)
+                return True, [Substitution(expression2, expression1)]
             else:
                 if expression2 in expression1:
                     return False, None
-                return True, Substitution(expression1, expression2)
+                return True, [Substitution(expression1, expression2)]
         elif type_expression1 != type_expression2:
             # If none of them variable and their types are not the same, then fail unification
             return False, None
         else:
             if type_expression1 == Constant:
                 # In case of constants, just check their names
-                return type_expression1.get_name() == type_expression2.get_name(), None
+                return expression1.get_name() == expression2.get_name(), None
             elif type_expression1 == Function:
                 if expression1.get_name() == expression2.get_name():
                     # If function names, are the same, then return unification result of their children
@@ -144,10 +147,14 @@ class MostGeneralUnifier(object):
                 raise ValueError('Unknown type for unification.')
 
     @staticmethod
-    def apply_substitution(elements: List[FirstOrderPredicateLogicEntity], substitution: Substitution) -> \
+    def apply_substitution(elements: List[FirstOrderPredicateLogicEntity], substitution: List[Substitution]) -> \
             List[FirstOrderPredicateLogicEntity]:
         pass
 
     @staticmethod
-    def apply_composition_to_substitution():
+    def apply_composition_to_substitution(first_substitutions: List[Substitution],
+                                          second_substitutions: List[Substitution]):
+        """
+        Reference: http://www.csd.uwo.ca/~moreno/cs2209_moreno/read/read6-unification.pdf (Pages: 12-13)
+        """
         pass
