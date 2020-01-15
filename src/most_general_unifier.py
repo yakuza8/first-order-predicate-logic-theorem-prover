@@ -1,3 +1,4 @@
+import unittest
 from typing import Union, List, Tuple, Optional
 
 from src.entity.first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
@@ -28,6 +29,20 @@ class Substitution(object):
 
     def __str__(self):
         return repr(self.substitute) + " / " + repr(self.variable)
+
+    def __eq__(self, other):
+        if not isinstance(other, Substitution):
+            return False
+        return self.substitute == other.substitute and self.variable == other.variable
+
+    def apply_substitution(self, applied_substitution: 'Substitution'):
+        # If the current substitute can be replaced then immediately replace it
+        if self.substitute == applied_substitution.variable:
+            self.substitute = applied_substitution.substitute
+        else:
+            # Otherwise, try to replace its children
+            self.substitute.find_variable_and_apply_substitution(applied_substitution.substitute,
+                                                                 applied_substitution.variable)
 
 
 class MostGeneralUnifier(object):
@@ -73,7 +88,7 @@ class MostGeneralUnifier(object):
             rest_of_children_of_expression2 = expression2[1:]
 
             # Get substitution result of the first elements
-            result, substitutions = MostGeneralUnifier\
+            result, substitutions = MostGeneralUnifier \
                 ._unify_atomic_entity(first_element_of_expression1, first_element_of_expression2)
 
             # If it is unsuccessful, then propagate this information
@@ -86,7 +101,7 @@ class MostGeneralUnifier(object):
             substitution_applied_rest_of_expression2 = MostGeneralUnifier.apply_substitution(
                 rest_of_children_of_expression2, substitutions)
 
-            result, unification_of_rest = MostGeneralUnifier\
+            result, unification_of_rest = MostGeneralUnifier \
                 .unify(substitution_applied_rest_of_expression1, substitution_applied_rest_of_expression2)
 
             if not result:
@@ -155,6 +170,111 @@ class MostGeneralUnifier(object):
     def apply_composition_to_substitution(first_substitutions: List[Substitution],
                                           second_substitutions: List[Substitution]):
         """
+        Composition of Substitutions
+        ============================
+        The composition procedure of list of substitutions to each other where
+        all the substitutions in the second list is composed into the entities
+        in the first list at the beginning. Then, unit substitutions are eliminated
+        to get final substitution list.
+
         Reference: http://www.csd.uwo.ca/~moreno/cs2209_moreno/read/read6-unification.pdf (Pages: 12-13)
         """
-        pass
+        # First apply composition to first substitutions with second substitutions
+        for substitution_to_be_compose in first_substitutions:
+            for substitution_to_be_applied in second_substitutions:
+                substitution_to_be_compose.apply_substitution(substitution_to_be_applied)
+
+        # Then do not add the same variable more than once
+        first_substitutions_variables = list(map(lambda s: s.variable, first_substitutions))
+        for substitution in second_substitutions:
+            if substitution.variable not in first_substitutions_variables:
+                first_substitutions.append(substitution)
+        # And remove unnecessary substitutions which variables substitutes itself
+        first_substitutions = list(filter(lambda s: s.substitute != s.variable, first_substitutions))
+        return first_substitutions
+
+
+class MGUUnitTest(unittest.TestCase):
+
+    def test_composition_of_substitution_1(self):
+        empty_substitution = []
+        first_substitution = [
+            Substitution(Function.build('f(y)'), Variable.build('x')),
+            Substitution(Variable.build('z'), Variable.build('y'))
+        ]
+
+        self.assertEqual(first_substitution, MostGeneralUnifier.apply_composition_to_substitution(empty_substitution, first_substitution))
+        self.assertEqual(first_substitution, MostGeneralUnifier.apply_composition_to_substitution(first_substitution, empty_substitution))
+
+    def test_composition_of_substitution_2(self):
+        first_substitution = [
+            Substitution(Function.build('f(y)'), Variable.build('x')),
+            Substitution(Variable.build('z'), Variable.build('y'))
+        ]
+
+        second_substitution = [
+            Substitution(Variable.build('a'), Variable.build('x')),
+            Substitution(Variable.build('b'), Variable.build('y')),
+            Substitution(Variable.build('y'), Variable.build('z'))
+        ]
+
+        expected = [
+            Substitution(Function.build('f(b)'), Variable.build('x')),
+            Substitution(Variable.build('y'), Variable.build('z'))
+        ]
+
+        output = MostGeneralUnifier.apply_composition_to_substitution(first_substitution, second_substitution)
+        self.assertEqual(expected, output)
+
+    def test_composition_of_substitution_3(self):
+        first_substitution = [
+            Substitution(Function.build('g(x, y)'), Variable.build('z'))
+        ]
+
+        second_substitution = [
+            Substitution(Constant.build('A'), Variable.build('x')),
+            Substitution(Constant.build('B'), Variable.build('y')),
+            Substitution(Variable.build('w'), Variable.build('c')),
+            Substitution(Constant.build('D'), Variable.build('z'))
+        ]
+
+        expected = [
+            Substitution(Function.build('g(A, B)'), Variable.build('z')),
+            Substitution(Constant.build('A'), Variable.build('x')),
+            Substitution(Constant.build('B'), Variable.build('y')),
+            Substitution(Variable.build('w'), Variable.build('c'))
+        ]
+
+        output = MostGeneralUnifier.apply_composition_to_substitution(first_substitution, second_substitution)
+        self.assertEqual(expected, output)
+
+    def test_composition_of_substitution_4(self):
+        first_substitution = [
+            Substitution(Function.build('f(x)'), Variable.build('u'))
+        ]
+
+        second_substitution = [
+            Substitution(Function.build('k(f(x))'), Variable.build('y'))
+        ]
+
+        third_substitution = [
+            Substitution(Function.build('k(f(x))'), Variable.build('z'))
+        ]
+
+        fourth_substitution = [
+            Substitution(Function.build('h(w)'), Variable.build('x'))
+        ]
+
+        expected = [
+            Substitution(Function.build('f(h(w))'), Variable.build('u')),
+            Substitution(Function.build('k(f(h(w)))'), Variable.build('y')),
+            Substitution(Function.build('k(f(h(w)))'), Variable.build('z')),
+            Substitution(Function.build('h(w)'), Variable.build('x'))
+        ]
+
+        output = []
+        output = MostGeneralUnifier.apply_composition_to_substitution(output, first_substitution)
+        output = MostGeneralUnifier.apply_composition_to_substitution(output, second_substitution)
+        output = MostGeneralUnifier.apply_composition_to_substitution(output, third_substitution)
+        output = MostGeneralUnifier.apply_composition_to_substitution(output, fourth_substitution)
+        self.assertEqual(expected, output)
