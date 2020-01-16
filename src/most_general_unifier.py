@@ -75,9 +75,9 @@ class MostGeneralUnifier(object):
         type_expression2 = type(expression2)
 
         # If both of them are atomic entities
-        if type_expression1 != list or type_expression2 != list:
+        if type_expression1 != list and type_expression2 != list:
             return MostGeneralUnifier._unify_atomic_entity(expression1, expression2)
-        elif type_expression1 == list or type_expression2 == list:
+        elif type_expression1 == list and type_expression2 == list:
             # They have to be of the same length
             if len(expression1) != len(expression2):
                 return False, None
@@ -152,7 +152,8 @@ class MostGeneralUnifier(object):
         else:
             if type_expression1 == Constant:
                 # In case of constants, just check their names
-                return expression1.get_name() == expression2.get_name(), None
+                are_same = expression1.get_name() == expression2.get_name()
+                return are_same, None if not are_same else []
             elif type_expression1 == Function:
                 if expression1.get_name() == expression2.get_name():
                     # If function names, are the same, then return unification result of their children
@@ -206,6 +207,96 @@ class MostGeneralUnifier(object):
 
 
 class MGUUnitTest(unittest.TestCase):
+
+    def test_unification_1(self):
+        expression1 = Function.build('p(f(x), y, g(y ,x))')
+        expression2 = Function.build('p(u, k(u), g(z, h(w)))')
+
+        _, unification_substitution = MostGeneralUnifier.unify(expression1, expression2)
+        expected_substitutions = [
+            Substitution(Function.build('f(h(w))'), Variable.build('u')),
+            Substitution(Function.build('k(f(h(w)))'), Variable.build('y')),
+            Substitution(Function.build('k(f(h(w)))'), Variable.build('z')),
+            Substitution(Function.build('h(w)'), Variable.build('x'))
+        ]
+
+        self.assertEqual(expected_substitutions, unification_substitution)
+
+    def test_unification_2(self):
+        expression1 = Function.build('p(f(x), y, g(y ,x), m(z))')
+        expression2 = Function.build('p(u, k(u), g(z, h(w)))')
+
+        result, unification_substitution = MostGeneralUnifier.unify(expression1, expression2)
+        self.assertFalse(result)
+        self.assertIsNone(unification_substitution)
+
+    def test_unification_3(self):
+        expression1 = Function.build('p(f(x), Y, g(y ,x))')
+        expression2 = Function.build('p(u, k(x), g(z, h(w)))')
+
+        result, unification_substitution = MostGeneralUnifier.unify(expression1, expression2)
+        self.assertFalse(result)
+        self.assertIsNone(unification_substitution)
+
+    def test_unification_4(self):
+        expression1 = Function.build('p(f(x), Y, g(y ,x))').get_child()
+        expression2 = Variable.build('abc')
+
+        result, unification_substitution = MostGeneralUnifier.unify(expression1, expression2)
+        self.assertFalse(result)
+        self.assertIsNone(unification_substitution)
+
+    def test_unification_5(self):
+        expression1 = Function.build('f(ABC, g(h(x, y)), u(k, l))').get_child()
+        expression2 = Function.build('f(ABC, g(h(x, y)), u(k, l))').get_child()
+
+        result, unification_substitution = MostGeneralUnifier.unify(expression1, expression2)
+        self.assertTrue(result)
+        self.assertEqual(0, len(unification_substitution))
+
+    def test_unification_6(self):
+        expression1 = Function.build('f(ABC, g(h(x, y)), u(k, l))').get_child()
+        expression2 = Function.build('f(ABC, g(x), u(k, l))').get_child()
+
+        result, unification_substitution = MostGeneralUnifier.unify(expression1, expression2)
+        self.assertFalse(result)
+        self.assertIsNone(unification_substitution)
+
+        expression1 = Function.build('f(ABC, g(x), u(k, l))').get_child()
+        expression2 = Function.build('f(ABC, g(h(x, y)), u(k, l))').get_child()
+
+        result, unification_substitution = MostGeneralUnifier.unify(expression1, expression2)
+        self.assertFalse(result)
+        self.assertIsNone(unification_substitution)
+
+    def test_unification_7(self):
+        expression1 = Function.build('f(ABC, g(h(x, y)), u(k, l))')
+        expression2 = Function.build('g(ABC, g(h(x, y)), u(k, l))')
+
+        result, unification_substitution = MostGeneralUnifier.unify(expression1, expression2)
+        self.assertFalse(result)
+        self.assertIsNone(unification_substitution)
+
+    def test_apply_substitution_1(self):
+        expression = Function.build('p(x, A)').get_child()
+        substitutions = [
+            Substitution(Variable.build('y'), Variable.build('x'))
+        ]
+        expected = [Variable.build('y'), Constant.build('A')]
+        self.assertEqual(expected, MostGeneralUnifier.apply_substitution(expression, substitutions))
+
+    def test_apply_substitution_2(self):
+        expression1 = Function.build('p(f(x), y, g(y ,x))').get_child()
+        expression2 = Function.build('p(u, k(u), g(z, h(w)))').get_child()
+        substitutions = [
+            Substitution(Function.build('f(h(w))'), Variable.build('u')),
+            Substitution(Function.build('k(f(h(w)))'), Variable.build('y')),
+            Substitution(Function.build('k(f(h(w)))'), Variable.build('z')),
+            Substitution(Function.build('h(w)'), Variable.build('x'))
+        ]
+        expected = Function.build('p(f(h(w)), k(f(h(w))), g(k(f(h(w))), h(w)))').get_child()
+        self.assertEqual(expected, MostGeneralUnifier.apply_substitution(expression1, substitutions))
+        self.assertEqual(expected, MostGeneralUnifier.apply_substitution(expression2, substitutions))
 
     def test_composition_of_substitution_1(self):
         empty_substitution = []
@@ -289,38 +380,3 @@ class MGUUnitTest(unittest.TestCase):
         output = MostGeneralUnifier.apply_composition_to_substitution(output, third_substitution)
         output = MostGeneralUnifier.apply_composition_to_substitution(output, fourth_substitution)
         self.assertEqual(expected, output)
-
-    def test_apply_substitution_1(self):
-        expression = Function.build('p(x, A)').get_child()
-        substitutions = [
-            Substitution(Variable.build('y'), Variable.build('x'))
-        ]
-        expected = [Variable.build('y'), Constant.build('A')]
-        self.assertEqual(expected, MostGeneralUnifier.apply_substitution(expression, substitutions))
-
-    def test_apply_substitution_2(self):
-        expression1 = Function.build('p(f(x), y, g(y ,x))').get_child()
-        expression2 = Function.build('p(u, k(u), g(z, h(w)))').get_child()
-        substitutions = [
-            Substitution(Function.build('f(h(w))'), Variable.build('u')),
-            Substitution(Function.build('k(f(h(w)))'), Variable.build('y')),
-            Substitution(Function.build('k(f(h(w)))'), Variable.build('z')),
-            Substitution(Function.build('h(w)'), Variable.build('x'))
-        ]
-        expected = Function.build('p(f(h(w)), k(f(h(w))), g(k(f(h(w))), h(w)))').get_child()
-        self.assertEqual(expected, MostGeneralUnifier.apply_substitution(expression1, substitutions))
-        self.assertEqual(expected, MostGeneralUnifier.apply_substitution(expression2, substitutions))
-
-    def test_unification_1(self):
-        expression1 = Function.build('p(f(x), y, g(y ,x))')
-        expression2 = Function.build('p(u, k(u), g(z, h(w)))')
-
-        _, unification_substitution = MostGeneralUnifier.unify(expression1, expression2)
-        expected_substitutions = [
-            Substitution(Function.build('f(h(w))'), Variable.build('u')),
-            Substitution(Function.build('k(f(h(w)))'), Variable.build('y')),
-            Substitution(Function.build('k(f(h(w)))'), Variable.build('z')),
-            Substitution(Function.build('h(w)'), Variable.build('x'))
-        ]
-
-        self.assertEqual(expected_substitutions, unification_substitution)
