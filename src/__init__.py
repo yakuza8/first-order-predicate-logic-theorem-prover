@@ -17,5 +17,6 @@ class ProblemState(object):
     """
     def __init__(self, knowledge_base: List[List[Predicate]], negated_theorem_clauses: List[List[Predicate]]):
         # Combine all the clauses into a single clause list
-        self.clauses = [clause for clause in knowledge_base]
-        self.clauses.extend(negated_theorem_clauses)
+        from src.entity.clause import Clause
+        self.clauses = [Clause(clause) for clause in knowledge_base]
+        self.clauses.extend([Clause(clause) for clause in negated_theorem_clauses])
