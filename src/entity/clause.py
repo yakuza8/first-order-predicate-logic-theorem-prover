@@ -212,3 +212,23 @@ class ClauseUnitTest(unittest.TestCase):
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(A),q(z)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('p(B),z(f),q(H),p(A)'))
         self.assertTrue(clause1.does_subsume(clause2))
+
+        clause1 = Clause(ClauseUnitTest._predicate_parser('p(x)'))
+        clause2 = Clause(ClauseUnitTest._predicate_parser('p(A),q(y)'))
+        self.assertTrue(clause1.does_subsume(clause2))
+
+        clause1 = Clause(ClauseUnitTest._predicate_parser('p(B)'))
+        clause2 = Clause(ClauseUnitTest._predicate_parser('p(x),q(y)'))
+        self.assertFalse(clause1.does_subsume(clause2))
+
+        clause1 = Clause(ClauseUnitTest._predicate_parser('p(B)'))
+        clause2 = Clause(ClauseUnitTest._predicate_parser('p(A),q(y)'))
+        self.assertFalse(clause1.does_subsume(clause2))
+
+        clause1 = Clause(ClauseUnitTest._predicate_parser('p(x),q(x)'))
+        clause2 = Clause(ClauseUnitTest._predicate_parser('p(y),q(y),r(y,B)'))
+        self.assertTrue(clause1.does_subsume(clause2))
+
+        clause1 = Clause(ClauseUnitTest._predicate_parser('p(x),q(A)'))
+        clause2 = Clause(ClauseUnitTest._predicate_parser('p(y),q(y),r(y,B)'))
+        self.assertFalse(clause1.does_subsume(clause2))
