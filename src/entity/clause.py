@@ -17,7 +17,7 @@ class Subsumption(Enum):
 class Clause(object):
     def __init__(self, predicates: List[Optional[Predicate]]):
         self.predicates = predicates
-        self.predicates = sorted(self.predicates, key=lambda predicate: predicate.get_name())
+        self.predicates = sorted(self.predicates, key=lambda predicate: (predicate.get_name(), predicate.is_negated))
 
     def get_clause_length(self):
         return len(self.predicates)
@@ -40,14 +40,14 @@ class Clause(object):
         # If not achieved any tautology, it means we have no tautology
         return False
 
-    def does_subsume(self, other: 'Clause') -> bool:
+    def does_subsume(self, other: 'Clause') -> Subsumption:
         # If no meet naming and negation match as a subset then immediately return False since subsumption cannot occur
         fast_check_result = Clause._fast_check_by_negation_and_name(self, other)
         if fast_check_result:
+            # TODO Add condition where fast check fails
             return True
         else:
-            # TODO Add condition where fast check fails
-            return False
+            return Subsumption.NO_SUBSUMPTION
 
     @staticmethod
     def _predicate_separator_by_sign(predicates):
@@ -165,6 +165,15 @@ class ClauseUnitTest(unittest.TestCase):
         clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),p(ABC, ACB, BAC, BCA, CAB, CBA)'))
         self.assertTrue(Clause._fast_check_by_negation_and_name(clause1, clause2))
 
+    def test_subsumption_with_fast_check_holds(self):
+        clause1 = Clause(ClauseUnitTest._predicate_parser('~p(y)'))
+        clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),p(v)'))
+        self.assertEqual(Subsumption.NO_SUBSUMPTION, clause1.does_subsume(clause2))
 
-    def test_subsumption(self):
-        pass
+        clause1 = Clause(ClauseUnitTest._predicate_parser('~p(y),p(u)'))
+        clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),p(v)'))
+        self.assertEqual(Subsumption.NO_SUBSUMPTION, clause1.does_subsume(clause2))
+
+        clause1 = Clause(ClauseUnitTest._predicate_parser('~p(y),~p(u)'))
+        clause2 = Clause(ClauseUnitTest._predicate_parser('p(z),p(v)'))
+        self.assertEqual(Subsumption.NO_SUBSUMPTION, clause1.does_subsume(clause2))
