@@ -38,6 +38,9 @@ class Variable(FirstOrderPredicateLogicEntity):
                                              variable: 'FirstOrderPredicateLogicEntity'):
         pass
 
+    def is_less_specific(self, other: 'FirstOrderPredicateLogicEntity') -> bool:
+        return True
+
     @staticmethod
     def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
         try:
@@ -113,7 +116,3 @@ class VariableUnitTest(unittest.TestCase):
 
         variable2 = ''
         self.assertFalse(Variable.build(variable2))
-
-
-if __name__ == '__main__':
-    unittest.main()

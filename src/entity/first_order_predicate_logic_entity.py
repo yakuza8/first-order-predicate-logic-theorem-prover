@@ -70,6 +70,15 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         """
         pass
 
+    @abstractmethod
+    def is_less_specific(self, other: 'FirstOrderPredicateLogicEntity') -> bool:
+        """
+        Method to check specificness of entities
+        :param other: Other entity instance of FirstOrderPredicateLogicEntity
+        :return: Boolean flag if the current entity is more specific than the other entity
+        """
+        pass
+
     @staticmethod
     @abstractmethod
     def build(value: str) -> Optional['FirstOrderPredicateLogicEntity']:

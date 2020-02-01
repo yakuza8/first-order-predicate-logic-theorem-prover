@@ -8,6 +8,7 @@ class Constant(FirstOrderPredicateLogicEntity):
     """
     Constants are also atomic values whose names start with an upper case letter.
     """
+
     def __init__(self, name: str):
         self.name = name
 
@@ -37,6 +38,9 @@ class Constant(FirstOrderPredicateLogicEntity):
     def find_variable_and_apply_substitution(self, substitute: 'FirstOrderPredicateLogicEntity',
                                              variable: 'FirstOrderPredicateLogicEntity'):
         pass
+
+    def is_less_specific(self, other: 'FirstOrderPredicateLogicEntity') -> bool:
+        return False
 
     @staticmethod
     def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
@@ -113,7 +117,3 @@ class ConstantUnitTest(unittest.TestCase):
 
         constant2 = ''
         self.assertFalse(Constant.build(constant2))
-
-
-if __name__ == '__main__':
-    unittest.main()

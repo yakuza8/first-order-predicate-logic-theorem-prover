@@ -47,6 +47,11 @@ class Function(FirstOrderPredicateLogicEntity):
             elif value.has_child:
                 value.find_variable_and_apply_substitution(substitute, variable)
 
+    def is_less_specific(self, other: 'FirstOrderPredicateLogicEntity') -> bool:
+        if isinstance(other, Function) and self.name == other.name:
+            return all(child1 == child2 or child1.is_less_specific(child2)for child1, child2 in zip(self.children, other.children))
+        return False
+
     @staticmethod
     def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
         import src.entity.constant as c
@@ -167,6 +172,51 @@ class FunctionUnitTest(unittest.TestCase):
         function3 = '  f( a , b, , cA ,   g ( ( a  )    )         '
         self.assertFalse(Function.build(function3))
 
+    def test_is_less_specific(self):
+        function1 = Function.build('f(a)')
+        function2 = Function.build('f(A)')
+        self.assertTrue(function1.is_less_specific(function2))
 
-if __name__ == '__main__':
-    unittest.main()
+        function1 = Function.build('f(A)')
+        function2 = Function.build('f(A)')
+        self.assertTrue(function1.is_less_specific(function2))
+
+        function1 = Function.build('f(B)')
+        function2 = Function.build('f(A)')
+        self.assertFalse(function1.is_less_specific(function2))
+
+        function1 = Function.build('f(a, B)')
+        function2 = Function.build('f(A, x)')
+        self.assertFalse(function1.is_less_specific(function2))
+
+        function1 = Function.build('f(a, b)')
+        function2 = Function.build('f(A, x)')
+        self.assertTrue(function1.is_less_specific(function2))
+
+        function1 = Function.build('f(a, g(z))')
+        function2 = Function.build('f(A, g(m))')
+        self.assertTrue(function1.is_less_specific(function2))
+
+        function1 = Function.build('f(a, g(H))')
+        function2 = Function.build('f(A, g(m))')
+        self.assertFalse(function1.is_less_specific(function2))
+
+        function1 = Function.build('f(a, g(z))')
+        function2 = Function.build('f(A, p(m))')
+        self.assertFalse(function1.is_less_specific(function2))
+
+        function1 = Function.build('f(a, H)')
+        function2 = Function.build('f(A, g(m))')
+        self.assertFalse(function1.is_less_specific(function2))
+
+        function1 = Function.build('f(a, b)')
+        function2 = Function.build('f(A, g(m))')
+        self.assertTrue(function1.is_less_specific(function2))
+
+        function1 = Function.build('f(A, b)')
+        function2 = Function.build('f(A, g(m))')
+        self.assertTrue(function1.is_less_specific(function2))
+
+        function1 = Function.build('f(A, b)')
+        function2 = Function.build('f(A, g(m))')
+        self.assertTrue(function1.is_less_specific(function2))

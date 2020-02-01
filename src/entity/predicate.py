@@ -50,6 +50,11 @@ class Predicate(FirstOrderPredicateLogicEntity):
             elif value.has_child:
                 value.find_variable_and_apply_substitution(substitute, variable)
 
+    def is_less_specific(self, other: 'Predicate'):
+        return self.name ==  other.name and \
+               all(child == other_child or child.is_less_specific(other_child)
+                   for child, other_child in zip(self.children, other.children))
+
     @staticmethod
     def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
         import src.entity.constant as c
@@ -191,7 +196,3 @@ class PredicateUnitTest(unittest.TestCase):
 
         predicate3 = '  p ( a , b, , cA ,   g (  a  )    )         '
         self.assertFalse(Predicate.build(predicate3))
-
-
-if __name__ == '__main__':
-    unittest.main()

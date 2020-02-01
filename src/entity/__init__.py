@@ -109,7 +109,3 @@ class CommonEntityUnitTest(unittest.TestCase):
         children4 = 'h ( h ( h ( x, ( y, z , h( y ) ) ) ) '
         output4 = children_entity_parser(children4)
         self.assertIsNone(output4)
-
-
-if __name__ == '__main__':
-    unittest.main()
