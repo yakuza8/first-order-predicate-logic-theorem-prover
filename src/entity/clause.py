@@ -1,23 +1,36 @@
 import itertools
 import unittest
-from enum import Enum
-from typing import List, Optional
+
+from typing import List, Optional, Union
 
 from src import Predicate
 from src.entity import children_entity_parser
 from src.most_general_unifier import MostGeneralUnifier
 
 
-class Subsumption(Enum):
-    LEFT_CLAUSE_SUBSUMES = 1
-    RIGHT_CLAUSE_SUBSUMES = 2
-    NO_SUBSUMPTION = 3
-
-
 class Clause(object):
+    """
+    Class for keeping predicates together and some several multi-predicate supported functionality
+    """
+
     def __init__(self, predicates: List[Optional[Predicate]]):
         self.predicates = predicates
         self.predicates = sorted(self.predicates, key=lambda predicate: (predicate.get_name(), predicate.is_negated))
+
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        return str(self.predicates)
+
+    def __eq__(self, other):
+        if not isinstance(other, Clause):
+            return False
+        return len(self.predicates) == len(other.predicates) and all(
+            [child_tuple[0] == child_tuple[1] for child_tuple in zip(self.predicates, other.predicates)])
+
+    def __hash__(self):
+        return hash(str(self.predicates))
 
     def get_clause_length(self):
         return len(self.predicates)
@@ -36,6 +49,7 @@ class Clause(object):
                 for negated_predicate in negated:
                     unification, _ = MostGeneralUnifier.unify(non_negated_predicate.get_child(),
                                                               negated_predicate.get_child())
+                    # If any of them can be unified, it means we got tautology
                     if unification:
                         return True
         # If not achieved any tautology, it means we have no tautology
@@ -56,7 +70,7 @@ class Clause(object):
                            itertools.groupby(self.predicates, lambda p: (p.get_name(), p.is_negated))}
             second_group = {key: list(group) for key, group in
                             itertools.groupby(other.predicates, lambda p: (p.get_name(), p.is_negated))}
-            # Then take common keys of each dict so that we can check if there exists any substitution which unifies them
+            # Take common keys of each dict so that we can check if there exists any substitution which unifies them
             common_keys = first_group.keys() & second_group.keys()
             # And filter common predicates
             filtered_first_group = [first_group[key] for key in common_keys]
@@ -75,8 +89,31 @@ class Clause(object):
             # If fast check fails
             return False
 
+    def resolve_with(self, other: 'Clause') -> Union['Clause', None]:
+        """
+        Function to resolve two clauses
+        :param other: Other clause
+        :return: Resolvent clause in case of resolution otherwise None
+        """
+        for predicate1, predicate2 in itertools.product(self.predicates, other.predicates):
+            # Try to unify them if they represent the same predicate but they have different negation states
+            if predicate1.get_name() == predicate2.get_name() and predicate1.is_negated != predicate2.is_negated:
+                result, substitutions = MostGeneralUnifier.unify(predicate1.get_child(), predicate2.get_child())
+                # Compose new predicate with combined predicates of both clauses except for resolvent predicates
+                new_clause_children = [Predicate.build(str(predicate)) for predicate in self.predicates]
+                new_clause_children.extend([Predicate.build(str(predicate)) for predicate in other.predicates])
+                new_clause_children.remove(predicate1)
+                new_clause_children.remove(predicate2)
+                # Return composed clause
+                return Clause(MostGeneralUnifier.apply_substitution(new_clause_children, substitutions))
+        # If none of them can be resolved, return none
+        return None
+
     @staticmethod
     def _predicate_separator_by_sign(predicates):
+        """
+        Grouping functionality of predicates
+        """
         non_negated, negated = [], []
         for predicate in predicates:
             (non_negated, negated)[predicate.is_negated].append(predicate)
@@ -84,6 +121,13 @@ class Clause(object):
 
     @staticmethod
     def _fast_check_by_negation_and_name(clause1: 'Clause', clause2: 'Clause') -> bool:
+        """
+        Fast subsumption check procedure which try to check there is any different predicate exists in other clause
+        so that the first clause cannot subsume
+        :param clause1: Clause to check subsume onto other clause
+        :param clause2: Clause which assumed to be subsumed by the first clause
+        :return: Boolean flag representing all predicates in the first clause are subset of that for second clause
+        """
         clause1 = set(map(lambda predicate: (predicate.is_negated, predicate.get_name()), clause1.predicates))
         clause2 = set(map(lambda predicate: (predicate.is_negated, predicate.get_name()), clause2.predicates))
         return clause1.issubset(clause2)
@@ -147,46 +191,52 @@ class ClauseUnitTest(unittest.TestCase):
         self.assertTrue(clause.has_tautology())
 
     def test_fast_check_valid(self):
+        # Should pass fast check since we have Predicate p
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(y)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),p(v)'))
         self.assertTrue(Clause._fast_check_by_negation_and_name(clause1, clause2))
 
+        # Should not pass since we have negated Predicate p
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(y)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),~p(v)'))
         self.assertFalse(Clause._fast_check_by_negation_and_name(clause1, clause2))
 
+        # Should pass fast check since we have Predicate p and more general than second clause
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(y)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),p(k(l, ABC))'))
         self.assertTrue(Clause._fast_check_by_negation_and_name(clause1, clause2))
 
+        # Should not pass since we have negated Predicate p
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(y)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),~p(k(l, ABC))'))
         self.assertFalse(Clause._fast_check_by_negation_and_name(clause1, clause2))
 
+        # Should pass fast check since we have Predicate p and more general than second clause
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(y)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),p(ABC, ACB, BAC, BCA, CAB, CBA)'))
         self.assertTrue(Clause._fast_check_by_negation_and_name(clause1, clause2))
 
+        # Should not pass since we have negated Predicate p
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(y)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),~p(ABC, ACB, BAC, BCA, CAB, CBA)'))
         self.assertFalse(Clause._fast_check_by_negation_and_name(clause1, clause2))
 
-        clause1 = Clause(ClauseUnitTest._predicate_parser('p(y)'))
-        clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),p(ABC, ACB, BAC, BCA, CAB, CBA)'))
-        self.assertTrue(Clause._fast_check_by_negation_and_name(clause1, clause2))
-
+        # Should not pass since we have negated Predicate q
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(y),~q(x)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),p(ABC, ACB, BAC, BCA, CAB, CBA)'))
         self.assertFalse(Clause._fast_check_by_negation_and_name(clause1, clause2))
 
+        # Should pass since we have negated Predicate p and q
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(y),q(x)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),p(ABC, ACB, BAC, BCA, CAB, CBA)'))
         self.assertTrue(Clause._fast_check_by_negation_and_name(clause1, clause2))
 
+        # Should not pass since we have additional Predicate z
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(y),q(x),z(m)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),p(ABC, ACB, BAC, BCA, CAB, CBA)'))
         self.assertFalse(Clause._fast_check_by_negation_and_name(clause1, clause2))
 
+        # Should pass we have subset of other clause
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(y),p(x),p(o)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('q(z),p(ABC, ACB, BAC, BCA, CAB, CBA)'))
         self.assertTrue(Clause._fast_check_by_negation_and_name(clause1, clause2))
@@ -205,22 +255,32 @@ class ClauseUnitTest(unittest.TestCase):
         self.assertFalse(clause1.does_subsume(clause2))
 
     def test_subsumption_with_fast_check_does_not_hold(self):
+        # Should subsume { A / x }
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(x)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('p(A)'))
         self.assertTrue(clause1.does_subsume(clause2))
 
+        # Should subsume { H / z }
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(A),q(z)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('p(B),z(f),q(H),p(A)'))
         self.assertTrue(clause1.does_subsume(clause2))
 
+        # Should not subsume { B / A } is not applicable both are constants
+        clause1 = Clause(ClauseUnitTest._predicate_parser('p(A),q(z)'))
+        clause2 = Clause(ClauseUnitTest._predicate_parser('p(B),z(f),q(H)'))
+        self.assertFalse(clause1.does_subsume(clause2))
+
+        # Should subsume { A / x } also we have extra predicate
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(x)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('p(A),q(y)'))
         self.assertTrue(clause1.does_subsume(clause2))
 
+        # Should not subsume { y / B } is not applicable constant is more specific than variable
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(B)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('p(x),q(y)'))
         self.assertFalse(clause1.does_subsume(clause2))
 
+        # Should not subsume { B / A } is not applicable both are constants
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(B)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('p(A),q(y)'))
         self.assertFalse(clause1.does_subsume(clause2))
@@ -229,6 +289,7 @@ class ClauseUnitTest(unittest.TestCase):
         clause2 = Clause(ClauseUnitTest._predicate_parser('p(y),q(y),r(y,B)'))
         self.assertTrue(clause1.does_subsume(clause2))
 
+        # Should not subsume { y / A } is not applicable constant is more specific than variable
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(x),q(A)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('p(y),q(y),r(y,B)'))
         self.assertFalse(clause1.does_subsume(clause2))

@@ -9,14 +9,12 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         """
         Representation of the entity
         """
-        pass
 
     @abstractmethod
     def __str__(self):
         """
         String representation of the entity
         """
-        pass
 
     @abstractmethod
     def __eq__(self, other):
@@ -25,7 +23,6 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         :param other: Other object instance to check equality
         :return: Boolean value representing equality of this instance with respect to the given parameter
         """
-        pass
 
     @abstractmethod
     def __contains__(self, item):
@@ -34,7 +31,6 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         :param item: Item which will be exposed to IN check in the current entity
         :return: Boolean flag representing whether the given item is in the current element
         """
-        pass
 
     @abstractmethod
     def get_name(self) -> str:
@@ -42,7 +38,6 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         Get name property of the current entity
         :return: Name of the current entity as a string value
         """
-        pass
 
     @abstractmethod
     def has_child(self) -> bool:
@@ -50,7 +45,6 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         Check procedure of existence of children of the current entity
         :return: Boolean flag representing if the current entity has children or not
         """
-        pass
 
     @abstractmethod
     def get_child(self) -> Optional[List['FirstOrderPredicateLogicEntity']]:
@@ -58,7 +52,6 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         Obtainment functionality of children of the current entity
         :return: Children of the current entity if they exist otherwise None will be returned
         """
-        pass
 
     @abstractmethod
     def find_variable_and_apply_substitution(self, substitute: 'FirstOrderPredicateLogicEntity',
@@ -68,7 +61,6 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         :param substitute: Substitution to be applied
         :param variable: Variable to be replaced
         """
-        pass
 
     @abstractmethod
     def is_less_specific(self, other: 'FirstOrderPredicateLogicEntity') -> bool:
@@ -77,7 +69,6 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         :param other: Other entity instance of FirstOrderPredicateLogicEntity
         :return: Boolean flag if the current entity is more specific than the other entity
         """
-        pass
 
     @staticmethod
     @abstractmethod
@@ -87,4 +78,3 @@ class FirstOrderPredicateLogicEntity(metaclass=ABCMeta):
         :param value: String representation of the target entity
         :return: Built entity if it is possible otherwise None will be returned
         """
-        pass
