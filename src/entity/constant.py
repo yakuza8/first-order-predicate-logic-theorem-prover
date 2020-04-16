@@ -19,6 +19,9 @@ class Constant(FirstOrderPredicateLogicEntity):
         return self.name
 
     def __eq__(self, other):
+        """
+        Check other instance to be Constant as well and their names are equal
+        """
         if not isinstance(other, Constant):
             return False
         return self.get_name() == other.get_name()
@@ -37,13 +40,22 @@ class Constant(FirstOrderPredicateLogicEntity):
 
     def find_variable_and_apply_substitution(self, substitute: 'FirstOrderPredicateLogicEntity',
                                              variable: 'FirstOrderPredicateLogicEntity'):
+        """
+        Constants cannot be iterated and their children cannot substituted so do nothing
+        """
         pass
 
     def is_less_specific(self, other: 'FirstOrderPredicateLogicEntity') -> bool:
+        """
+        Constants are the most specific entities in the domain, so they will directly return False
+        """
         return False
 
     @staticmethod
     def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
+        """
+        Constant builder where unnecessary whitespaces are removed and first letter of entity is checked to be uppercase
+        """
         try:
             value = value.strip()
             if value.isalnum() and value[0].isupper():

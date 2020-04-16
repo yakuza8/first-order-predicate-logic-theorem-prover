@@ -44,9 +44,9 @@ class Clause(object):
         # Group each predicate by their name
         for key, group in itertools.groupby(self.predicates, lambda predicate: predicate.get_name()):
             # Separate them by their negation and test all the unification results of permutations of paired predicates
-            non_negated, negated = Clause._predicate_separator_by_sign(group)
-            for non_negated_predicate in non_negated:
-                for negated_predicate in negated:
+            non_negated_predicates, negated_predicates = Clause._predicate_separator_by_sign(group)
+            for non_negated_predicate in non_negated_predicates:
+                for negated_predicate in negated_predicates:
                     unification, _ = MostGeneralUnifier.unify(non_negated_predicate.get_child(),
                                                               negated_predicate.get_child())
                     # If any of them can be unified, it means we got tautology

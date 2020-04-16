@@ -63,6 +63,9 @@ def children_entity_parser(children: str):
 
 
 class CommonEntityUnitTest(unittest.TestCase):
+    """
+    In test cases, I knowingly put extra whitespaces to check it handles properly with them
+    """
 
     def test_valid_children_parsing(self):
         children1 = '  a , f ( y, h, z) , c ,   g (  a  )    '

@@ -10,6 +10,7 @@ class Function(FirstOrderPredicateLogicEntity):
     Functions are the entities which are pretty similar to predicates, but they cannot be negated
     and take other functions as its children. Their names should start with lower case letter.
     """
+
     def __init__(self, name: str, children: List[FirstOrderPredicateLogicEntity]):
         self.name = name
         self.children = children
@@ -22,10 +23,13 @@ class Function(FirstOrderPredicateLogicEntity):
                + ENTITY_SEPARATE_SYMBOL.join(repr(child) for child in self.children) + BLOCK_CLOSE_SYMBOL
 
     def __eq__(self, other):
+        """
+        Check name and children equality with other function
+        """
         if not isinstance(other, Function):
             return False
-        return self.get_name() == other.get_name() and len(self.get_child()) == len(other.get_child()) \
-            and all([child_tuple[0] == child_tuple[1] for child_tuple in zip(self.get_child(), other.get_child())])
+        return self.get_name() == other.get_name() and len(self.get_child()) == len(other.get_child()) and all(
+            [child_tuple[0] == child_tuple[1] for child_tuple in zip(self.get_child(), other.get_child())])
 
     def __contains__(self, item):
         return self == item or any([item in child for child in self.children])
@@ -41,6 +45,9 @@ class Function(FirstOrderPredicateLogicEntity):
 
     def find_variable_and_apply_substitution(self, substitute: 'FirstOrderPredicateLogicEntity',
                                              variable: 'FirstOrderPredicateLogicEntity'):
+        """
+        Search and replace the variable with substitution in a recursive way
+        """
         for index, value in enumerate(self.children):
             if value == variable:
                 self.children[index] = substitute
@@ -48,12 +55,21 @@ class Function(FirstOrderPredicateLogicEntity):
                 value.find_variable_and_apply_substitution(substitute, variable)
 
     def is_less_specific(self, other: 'FirstOrderPredicateLogicEntity') -> bool:
+        """
+        The semantic under this function is if other entity is function too and all of the children of this Function
+        equally or less specific than the other Function's children, then it is less specific. Otherwise, it is not.
+        """
         if isinstance(other, Function) and self.name == other.name:
-            return all(child1 == child2 or child1.is_less_specific(child2)for child1, child2 in zip(self.children, other.children))
+            return all(child1 == child2 or child1.is_less_specific(child2) for child1, child2 in
+                       zip(self.children, other.children))
         return False
 
     @staticmethod
     def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
+        """
+        Build method for Function entity where validity of parentheses are checked and internal entities should hold
+        other entities among Function, Variable or Constant
+        """
         import src.entity.constant as c
         import src.entity.variable as v
         try:

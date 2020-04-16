@@ -1,7 +1,8 @@
 import unittest
 from typing import List, Optional
 
-from src.entity import BLOCK_OPEN_SYMBOL, ENTITY_SEPARATE_SYMBOL, BLOCK_CLOSE_SYMBOL, NEGATION_SYMBOL, children_entity_parser
+from src.entity import BLOCK_OPEN_SYMBOL, ENTITY_SEPARATE_SYMBOL, BLOCK_CLOSE_SYMBOL, NEGATION_SYMBOL, \
+    children_entity_parser
 from src.entity.first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
 
 
@@ -11,6 +12,7 @@ class Predicate(FirstOrderPredicateLogicEntity):
     One or more than one entity can be child of predicates. Also, they can be negated with '~'.
     Their names should start with lower case letter.
     """
+
     def __init__(self, name: str, children: List[FirstOrderPredicateLogicEntity], is_negated: bool = False):
         self.name = name
         self.children = children
@@ -21,14 +23,18 @@ class Predicate(FirstOrderPredicateLogicEntity):
 
     def __str__(self):
         return ('' if not self.is_negated else NEGATION_SYMBOL) + self.name + \
-               BLOCK_OPEN_SYMBOL + ENTITY_SEPARATE_SYMBOL.join(repr(child) for child in self.children) + BLOCK_CLOSE_SYMBOL
+               BLOCK_OPEN_SYMBOL + ENTITY_SEPARATE_SYMBOL.join(
+            repr(child) for child in self.children) + BLOCK_CLOSE_SYMBOL
 
     def __eq__(self, other):
+        """
+        Check name, negation and children equality with other predicate
+        """
         if not isinstance(other, Predicate):
             return False
-        return self.get_name() == other.get_name() and self.is_negated == other.is_negated \
-               and len(self.get_child()) == len(other.get_child()) \
-               and all([child_tuple[0] == child_tuple[1] for child_tuple in zip(self.get_child(), other.get_child())])
+        return self.get_name() == other.get_name() and self.is_negated == other.is_negated and len(
+            self.get_child()) == len(other.get_child()) and all(
+            [child_tuple[0] == child_tuple[1] for child_tuple in zip(self.get_child(), other.get_child())])
 
     def __contains__(self, item):
         return self == item or any([item in child for child in self.children])
@@ -44,19 +50,31 @@ class Predicate(FirstOrderPredicateLogicEntity):
 
     def find_variable_and_apply_substitution(self, substitute: 'FirstOrderPredicateLogicEntity',
                                              variable: 'FirstOrderPredicateLogicEntity'):
+        """
+        Search and replace the variable with substitution in a recursive way
+        """
         for index, value in enumerate(self.children):
             if value == variable:
                 self.children[index] = substitute
             elif value.has_child:
                 value.find_variable_and_apply_substitution(substitute, variable)
 
-    def is_less_specific(self, other: 'Predicate'):
-        return self.name ==  other.name and \
-               all(child == other_child or child.is_less_specific(other_child)
-                   for child, other_child in zip(self.children, other.children))
+    def is_less_specific(self, other: 'FirstOrderPredicateLogicEntity'):
+        """
+        In case of other entity is Predicate, then it should hold name equality and children equally or less specific
+        than the other Predicate's children
+        """
+        if isinstance(other, Predicate):
+            return self.name == other.name and all(child == other_child or child.is_less_specific(other_child)
+                                                   for child, other_child in zip(self.children, other.children))
+        return False
 
     @staticmethod
     def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
+        """
+        Build method for Predicate entity where validity of parentheses are checked and negation, internal entities
+        should hold other entities among Function, Variable or Constant
+        """
         import src.entity.constant as c
         import src.entity.function as f
         import src.entity.variable as v
@@ -78,7 +96,8 @@ class Predicate(FirstOrderPredicateLogicEntity):
                 if children is None:
                     return None
                 # Inside of a predicate there must be these entities only
-                built_children = [f.Function.build(child) or v.Variable.build(child) or c.Constant.build(child) for child in children]
+                built_children = [f.Function.build(child) or v.Variable.build(child) or c.Constant.build(child) for
+                                  child in children]
                 if all(built_children):
                     return Predicate(predicate_name, built_children, is_negated)
             return None

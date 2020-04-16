@@ -15,6 +15,7 @@ class ProblemState(object):
     so that we can refute the target clauses via trying to reach contradiction in knowledge
     space
     """
+
     def __init__(self, knowledge_base: List[List[Predicate]], negated_theorem_clauses: List[List[Predicate]]):
         # Combine all the clauses into a single clause list
         from src.entity.clause import Clause

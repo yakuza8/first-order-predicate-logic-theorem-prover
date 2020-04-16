@@ -8,6 +8,7 @@ class Variable(FirstOrderPredicateLogicEntity):
     """
     Variables are atomic values whose names start with a lower case letter.
     """
+
     def __init__(self, name: str):
         self.name = name
 
@@ -18,6 +19,9 @@ class Variable(FirstOrderPredicateLogicEntity):
         return self.name
 
     def __eq__(self, other):
+        """
+        Check other instance to be Variable as well and their names are equal
+        """
         if not isinstance(other, Variable):
             return False
         return self.get_name() == other.get_name()
@@ -36,13 +40,22 @@ class Variable(FirstOrderPredicateLogicEntity):
 
     def find_variable_and_apply_substitution(self, substitute: 'FirstOrderPredicateLogicEntity',
                                              variable: 'FirstOrderPredicateLogicEntity'):
+        """
+        Variables cannot be iterated and their children cannot substituted so do nothing
+        """
         pass
 
     def is_less_specific(self, other: 'FirstOrderPredicateLogicEntity') -> bool:
+        """
+        In any case, Variable entities are the least specific entity in the domain
+        """
         return True
 
     @staticmethod
     def build(value: str) -> Optional[FirstOrderPredicateLogicEntity]:
+        """
+        Variable builder where unnecessary whitespaces are removed and first letter of entity is checked to be lowercase
+        """
         try:
             value = value.strip()
             if value.isalnum() and value[0].islower():
@@ -61,7 +74,7 @@ class VariableUnitTest(unittest.TestCase):
         self.assertEqual(variable_str, variable.get_name())
         self.assertFalse(variable.has_child())
         self.assertIsNone(variable.get_child())
-        
+
     def test_equality(self):
         variable1 = Variable.build('abc')
         variable2 = Variable.build('abc')

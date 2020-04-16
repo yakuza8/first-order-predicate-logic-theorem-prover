@@ -305,8 +305,10 @@ class MGUUnitTest(unittest.TestCase):
             Substitution(Variable.build('z'), Variable.build('y'))
         ]
 
-        self.assertEqual(first_substitution, MostGeneralUnifier.apply_composition_to_substitution(empty_substitution, first_substitution))
-        self.assertEqual(first_substitution, MostGeneralUnifier.apply_composition_to_substitution(first_substitution, empty_substitution))
+        self.assertEqual(first_substitution,
+                         MostGeneralUnifier.apply_composition_to_substitution(empty_substitution, first_substitution))
+        self.assertEqual(first_substitution,
+                         MostGeneralUnifier.apply_composition_to_substitution(first_substitution, empty_substitution))
 
     def test_composition_of_substitution_2(self):
         first_substitution = [
