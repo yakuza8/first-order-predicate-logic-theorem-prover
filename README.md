@@ -156,6 +156,12 @@ Prove by refutation resolution order will be shown.
 [p(A,f(t))] | [~p(A,f(B))] -> [] with substitution [B / t]
 ```
 
+## Running
+Example running command is provided below. Script expects file path for the input with _-f_ flag.
+```shell
+$ autonomous_theorem_prover.py -f ../sample_inputs/input3.inp
+``` 
+
 ## Notes
 The project is written with **Python3.6** and no external library is used.
 
