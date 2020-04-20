@@ -1,7 +1,7 @@
 import itertools
 import unittest
 
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 
 from src import Predicate
 from src.entity import children_entity_parser
@@ -26,8 +26,7 @@ class Clause(object):
     def __eq__(self, other):
         if not isinstance(other, Clause):
             return False
-        return len(self.predicates) == len(other.predicates) and all(
-            [child_tuple[0] == child_tuple[1] for child_tuple in zip(self.predicates, other.predicates)])
+        return str(self.predicates) == str(other)
 
     def __hash__(self):
         return hash(str(self.predicates))
@@ -89,7 +88,7 @@ class Clause(object):
             # If fast check fails
             return False
 
-    def resolve_with(self, other: 'Clause') -> Union['Clause', None]:
+    def resolve_with(self, other: 'Clause') -> Tuple[Union['Clause', None], Union['Clause', None]]:
         """
         Function to resolve two clauses
         :param other: Other clause
@@ -105,9 +104,9 @@ class Clause(object):
                 new_clause_children.remove(predicate1)
                 new_clause_children.remove(predicate2)
                 # Return composed clause
-                return Clause(MostGeneralUnifier.apply_substitution(new_clause_children, substitutions))
+                return Clause(MostGeneralUnifier.apply_substitution(new_clause_children, substitutions)), substitutions
         # If none of them can be resolved, return none
-        return None
+        return None, None
 
     @staticmethod
     def _predicate_separator_by_sign(predicates):
