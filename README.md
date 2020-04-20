@@ -62,9 +62,104 @@ Breadth first strategy is used while generating new level clauses until **EMPTY_
 no new clause to add among already known clauses. Here, **EMPTY_CLAUSE** means we achieved to resolve two opposite
 clause and get contradiction. Let's have a look at simple example for resolution.
 
+Additionally, removing of tautologies and subsumption eliminations are applied for each layer of the search.
+
 ```
 # Here, predicates q(z) and ~q(y) can be unified and resolved. The remaining predicates from both clauses
 # They will be merged into single clause and previously unification substitution will be applied into combined clause
 Clause [~p(z,f(B)), q(z)] and clause [~q(y), r(y)] resolved into clause [~p(y,f(B)), r(y)] with substitution [y / z]
 ```
 
+#### Input - Output
+In this section sample inputs and corresponding outputs will be listed. But, before getting deep into examples,
+I want to mention about input format. Knowledge base and negated theorem predicates should be contained in the input
+which should have its format as **JSON**. You need to pay attention to key names since parser expects them as 
+"knowledge_base" and "negated_theorem_predicates". Both of these are lists and each item in these list represents
+a single clause which may have one or more predicates in it. Negated theorem predicates should be the negated version
+of clauses that you want to prove.
+
+**Important Note:** Your clauses will be interpreted in CNF (Conjunctive normal form) i.e. `q(z),~p(z,f(B))` will be
+interpreted as `q(z) v ~p(z,f(B))` where symbol **v** means **OR** operator in first order logic.
+
+```json
+{
+    "knowledge_base": [
+        "p(A,f(t))",
+        "q(z),~p(z,f(B))",
+        "~q(y),r(y)"
+    ],
+    "negated_theorem_predicates": [
+        "~r(A)"
+    ]
+}
+```
+
+##### Examples 1
+Input:
+```json
+{
+    "knowledge_base": [
+        "~p(x),q(x)",
+        "p(y),r(y)",
+        "~q(z),s(z)",
+        "~r(t),s(t)"
+    ],
+    "negated_theorem_predicates": [
+        "~s(A)"
+    ]
+}
+```
+
+Output:
+```
+Initial knowledge base clauses are:
+Clause 0 	| [~p(x), q(x)]
+Clause 1 	| [p(y), r(y)]
+Clause 2 	| [~q(z), s(z)]
+Clause 3 	| [~r(t), s(t)]
+Clause 4 	| [~s(A)]
+Knowledge base contradicts, so inverse of the negated target clause is provable.
+Prove by refutation resolution order will be shown.
+[p(y), r(y)] | [~r(t), s(t)] -> [p(t), s(t)] with substitution [t / y]
+[~s(A)] | [p(t), s(t)] -> [p(A)] with substitution [A / t]
+[~p(x), q(x)] | [p(A)] -> [q(A)] with substitution [A / x]
+[~q(z), s(z)] | [~s(A)] -> [~q(A)] with substitution [A / z]
+[~q(A)] | [q(A)] -> [] with substitution []
+```
+
+##### Examples 1
+Input:
+```json
+{
+    "knowledge_base": [
+        "p(A,f(t))",
+        "q(z),~p(z,f(B))",
+        "r(y),~q(y)"
+    ],
+    "negated_theorem_predicates": [
+        "~r(A)"
+    ]
+}
+```
+
+Output:
+```
+Initial knowledge base clauses are:
+Clause 0 	| [p(A,f(t))]
+Clause 1 	| [~p(z,f(B)), q(z)]
+Clause 2 	| [~q(y), r(y)]
+Clause 3 	| [~r(A)]
+Knowledge base contradicts, so inverse of the negated target clause is provable.
+Prove by refutation resolution order will be shown.
+[~q(y), r(y)] | [~r(A)] -> [~q(A)] with substitution [A / y]
+[~p(z,f(B)), q(z)] | [~q(A)] -> [~p(A,f(B))] with substitution [A / z]
+[p(A,f(t))] | [~p(A,f(B))] -> [] with substitution [B / t]
+```
+
+## Notes
+The project is written with **Python3.6** and no external library is used.
+
+## References
+* Russell, Stuart J. (Stuart Jonathan). (2010). Artificial intelligence : a modern approach. Upper Saddle River, N.J. :Prentice Hall, 285-365 
+* http://intrologic.stanford.edu/sections/section_12_09.html
+* http://www.mathcs.duq.edu/simon/Fall04/notes-7-4/node6.html
