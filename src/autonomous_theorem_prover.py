@@ -7,7 +7,8 @@ from entity.clause import Clause
 from src import ProblemState
 from src.input_parser import InputParser
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)-8s : %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
 
 class AutonomousTheoremProver(object):
