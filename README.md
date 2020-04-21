@@ -127,7 +127,7 @@ Prove by refutation resolution order will be shown.
 [~q(A)] | [q(A)] -> [] with substitution []
 ```
 
-##### Examples 1
+##### Examples 2
 Input:
 ```json
 {
