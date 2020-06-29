@@ -1,5 +1,8 @@
 # First Order Predicate Logic Theorem Prover
 
+[![Build Status](https://travis-ci.com/yakuza8/first-order-predicate-logic-theorem-prover.svg?branch=master)](https://travis-ci.com/yakuza8/first-order-predicate-logic-theorem-prover)
+[![codecov](https://codecov.io/gh/yakuza8/first-order-predicate-logic-theorem-prover/branch/master/graph/badge.svg)](https://codecov.io/gh/yakuza8/first-order-predicate-logic-theorem-prover)
+
 ## Description
 The main aim of this project is to implement autonomous theorem prover for **First Order Predicate Logic** where
 proof method is **Proof by Refutation** with **Breadth First Search** strategy.
