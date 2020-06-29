@@ -138,6 +138,27 @@ class ClauseUnitTest(unittest.TestCase):
     def _predicate_parser(predicates):
         return [Predicate.build(predicate) for predicate in children_entity_parser(predicates)]
 
+    def test_basic_properties(self):
+        predicate_string = 'p(y), q(y,A), r(A)'
+        predicates = ClauseUnitTest._predicate_parser(predicate_string)
+        predicates2 = ClauseUnitTest._predicate_parser(predicate_string + ', p(x)')
+
+        clause = Clause(predicates)
+        clause2 = Clause(predicates)
+        clause3 = Clause(predicates2)
+
+        expected_string = '[' + ', '.join(str(p) for p in predicates) + ']'
+
+        self.assertEqual(expected_string, str(clause))
+        self.assertEqual(expected_string, repr(clause))
+
+        self.assertEqual(hash(clause), hash(clause2))
+        self.assertNotEqual(hash(clause), hash(clause3))
+
+        self.assertEqual(clause, clause2)
+        self.assertNotEqual(clause, clause3)
+        self.assertNotEqual(clause, 8)
+
     def test_get_predicate_length(self):
         clause = Clause([])
         self.assertEqual(0, clause.get_clause_length())
@@ -292,3 +313,27 @@ class ClauseUnitTest(unittest.TestCase):
         clause1 = Clause(ClauseUnitTest._predicate_parser('p(x),q(A)'))
         clause2 = Clause(ClauseUnitTest._predicate_parser('p(y),q(y),r(y,B)'))
         self.assertFalse(clause1.does_subsume(clause2))
+
+    def test_resolve_with_with_match(self):
+        clause1 = Clause(ClauseUnitTest._predicate_parser('~q(y), r(y)'))
+        clause2 = Clause(ClauseUnitTest._predicate_parser('~r(A)'))
+
+        resolvent, substitution = clause1.resolve_with(clause2)
+
+        self.assertIsNotNone(resolvent)
+        self.assertIsNotNone(substitution)
+
+        expected_resolvent = Clause(ClauseUnitTest._predicate_parser('~q(y)'))
+        expected_substitution_list = '[A / y]'
+
+        self.assertEqual(expected_resolvent, resolvent)
+        self.assertEqual(expected_substitution_list, str(substitution))
+
+    def test_resolve_with_with_no_match(self):
+        clause1 = Clause(ClauseUnitTest._predicate_parser('~q(y), r(y)'))
+        clause2 = Clause(ClauseUnitTest._predicate_parser('p(A,f(t))'))
+
+        resolvent, substitution = clause1.resolve_with(clause2)
+
+        self.assertIsNone(resolvent)
+        self.assertIsNone(substitution)
