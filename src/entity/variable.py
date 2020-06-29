@@ -1,7 +1,7 @@
 import unittest
 from typing import Optional, List
 
-from src.entity.first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
+from .first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
 
 
 class Variable(FirstOrderPredicateLogicEntity):
@@ -56,13 +56,10 @@ class Variable(FirstOrderPredicateLogicEntity):
         """
         Variable builder where unnecessary whitespaces are removed and first letter of entity is checked to be lowercase
         """
-        try:
-            value = value.strip()
-            if value.isalnum() and value[0].islower():
-                return Variable(value)
-            return None
-        except IndexError:
-            return None
+        value = value.strip()
+        if value.isalnum() and value[0].islower():
+            return Variable(value)
+        return None
 
 
 class VariableUnitTest(unittest.TestCase):
@@ -72,6 +69,7 @@ class VariableUnitTest(unittest.TestCase):
         variable = Variable.build(variable_str)
 
         self.assertEqual(variable_str, variable.get_name())
+        self.assertEqual(variable_str, repr(variable))
         self.assertFalse(variable.has_child())
         self.assertIsNone(variable.get_child())
 

@@ -3,9 +3,9 @@ import unittest
 
 from typing import List, Optional, Union, Tuple
 
-from src import Predicate
-from src.entity import children_entity_parser
-from src.most_general_unifier import MostGeneralUnifier
+from . import children_entity_parser
+from .predicate import Predicate
+from ..most_general_unifier import MostGeneralUnifier
 
 
 class Clause(object):

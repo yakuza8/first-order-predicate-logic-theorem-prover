@@ -1,10 +1,10 @@
 import unittest
 from typing import Union, List, Tuple, Optional
 
-from src.entity.first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
-from src.entity.constant import Constant
-from src.entity.function import Function
-from src.entity.variable import Variable
+from .entity.first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
+from .entity.constant import Constant
+from .entity.function import Function
+from .entity.variable import Variable
 
 
 class Substitution(object):
@@ -43,6 +43,21 @@ class Substitution(object):
             # Otherwise, try to replace its children
             self.substitute.find_variable_and_apply_substitution(applied_substitution.substitute,
                                                                  applied_substitution.variable)
+
+
+class SubstitutionUnitTest(unittest.TestCase):
+
+    def test_basic_properties(self):
+        s1 = Substitution(Function.build('f(h(w))'), Variable.build('u'))
+        s2 = Substitution(Function.build('k(f(h(w)))'), Variable.build('y'))
+        s3 = Substitution(Function.build('f(h(w))'), Variable.build('u'))
+
+        self.assertEqual("f(h(w)) / u", str(s1))
+        self.assertEqual("f(h(w)) / u", repr(s1))
+
+        self.assertEqual(s1, s3)
+        self.assertNotEqual(s1, s2)
+        self.assertNotEqual(s1, 8)
 
 
 class MostGeneralUnifier(object):
@@ -130,7 +145,10 @@ class MostGeneralUnifier(object):
         * Constant - function: Cannot be unified
         * Function - variable: Can be unified by writing function into where variable exists
         * Function - constant: Cannot be unified
-        * Function - function: Can be unified if both functions have the same naming and their children can also be unified
+        * Function - function: Can be unified if both functions have the same naming and their
+                               children can also be unified
+
+        .. note:: Unification is not applied for Predicates
         """
         type_expression1 = type(expression1)
         type_expression2 = type(expression2)
@@ -276,6 +294,16 @@ class MGUUnitTest(unittest.TestCase):
         result, unification_substitution = MostGeneralUnifier.unify(expression1, expression2)
         self.assertFalse(result)
         self.assertIsNone(unification_substitution)
+
+    def test_unification_8(self):
+        from .entity.predicate import Predicate
+
+        expression1 = Predicate.build('f(ABC, g(h(x, y)), u(k, l))')
+        expression2 = Predicate.build('g(ABC, g(h(x, y)), u(k, l))')
+
+        with self.assertRaises(ValueError):
+            _, _ = MostGeneralUnifier.unify(expression1, expression2)
+
 
     def test_apply_substitution_1(self):
         expression = Function.build('p(x, A)').get_child()

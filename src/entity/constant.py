@@ -1,7 +1,7 @@
 import unittest
 from typing import Optional, List
 
-from src.entity.first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
+from .first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
 
 
 class Constant(FirstOrderPredicateLogicEntity):
@@ -56,13 +56,10 @@ class Constant(FirstOrderPredicateLogicEntity):
         """
         Constant builder where unnecessary whitespaces are removed and first letter of entity is checked to be uppercase
         """
-        try:
-            value = value.strip()
-            if value.isalnum() and value[0].isupper():
-                return Constant(value)
-            return None
-        except IndexError:
-            return None
+        value = value.strip()
+        if value.isalnum() and value[0].isupper():
+            return Constant(value)
+        return None
 
 
 class ConstantUnitTest(unittest.TestCase):
@@ -72,6 +69,7 @@ class ConstantUnitTest(unittest.TestCase):
         constant = Constant.build(constant_str)
 
         self.assertEqual(constant_str, constant.get_name())
+        self.assertEqual(constant_str, repr(constant))
         self.assertFalse(constant.has_child())
         self.assertIsNone(constant.get_child())
 

@@ -1,8 +1,8 @@
 import unittest
 from typing import List, Optional
 
-from src.entity import BLOCK_OPEN_SYMBOL, ENTITY_SEPARATE_SYMBOL, BLOCK_CLOSE_SYMBOL, children_entity_parser
-from src.entity.first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
+from . import BLOCK_OPEN_SYMBOL, ENTITY_SEPARATE_SYMBOL, BLOCK_CLOSE_SYMBOL, children_entity_parser
+from .first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
 
 
 class Function(FirstOrderPredicateLogicEntity):
@@ -101,6 +101,7 @@ class FunctionUnitTest(unittest.TestCase):
         function = Function.build(function_str)
 
         self.assertEqual('f', function.get_name())
+        self.assertEqual(function_str, repr(function))
         self.assertTrue(function.has_child())
         self.assertIsNotNone(function.get_child())
         self.assertEqual(4, len(function.get_child()))

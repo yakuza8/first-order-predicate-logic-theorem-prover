@@ -3,9 +3,9 @@ import logging
 from collections import deque
 from typing import Set
 
-from entity.clause import Clause
-from src import ProblemState
-from src.input_parser import InputParser
+from . import ProblemState
+from .entity.clause import Clause
+from .input_parser import InputParser
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)-8s : %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')

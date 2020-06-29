@@ -1,9 +1,8 @@
 import unittest
 from typing import List, Optional
 
-from src.entity import BLOCK_OPEN_SYMBOL, ENTITY_SEPARATE_SYMBOL, BLOCK_CLOSE_SYMBOL, NEGATION_SYMBOL, \
-    children_entity_parser
-from src.entity.first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
+from . import BLOCK_OPEN_SYMBOL, ENTITY_SEPARATE_SYMBOL, BLOCK_CLOSE_SYMBOL, NEGATION_SYMBOL, children_entity_parser
+from .first_order_predicate_logic_entity import FirstOrderPredicateLogicEntity
 
 
 class Predicate(FirstOrderPredicateLogicEntity):
@@ -51,13 +50,8 @@ class Predicate(FirstOrderPredicateLogicEntity):
     def find_variable_and_apply_substitution(self, substitute: 'FirstOrderPredicateLogicEntity',
                                              variable: 'FirstOrderPredicateLogicEntity'):
         """
-        Search and replace the variable with substitution in a recursive way
+        Predicates cannot be applied for substitution
         """
-        for index, value in enumerate(self.children):
-            if value == variable:
-                self.children[index] = substitute
-            elif value.has_child:
-                value.find_variable_and_apply_substitution(substitute, variable)
 
     def is_less_specific(self, other: 'FirstOrderPredicateLogicEntity'):
         """
@@ -93,8 +87,6 @@ class Predicate(FirstOrderPredicateLogicEntity):
             # It should be alphanumeric and must be start with lower case
             if predicate_name.isalnum() and predicate_name[0].islower():
                 children = children_entity_parser(value[first_open_block_index + 1: last_close_block_index])
-                if children is None:
-                    return None
                 # Inside of a predicate there must be these entities only
                 built_children = [f.Function.build(child) or v.Variable.build(child) or c.Constant.build(child) for
                                   child in children]
@@ -112,6 +104,7 @@ class PredicateUnitTest(unittest.TestCase):
         predicate = Predicate.build(predicate_str)
 
         self.assertEqual('p', predicate.get_name())
+        self.assertEqual(predicate_str, repr(predicate))
         self.assertTrue(predicate.has_child())
         self.assertIsNotNone(predicate.get_child())
         self.assertEqual(4, len(predicate.get_child()))
@@ -215,3 +208,17 @@ class PredicateUnitTest(unittest.TestCase):
 
         predicate3 = '  p ( a , b, , cA ,   g (  a  )    )         '
         self.assertFalse(Predicate.build(predicate3))
+
+        predicate4 = 'p (  )'
+        self.assertFalse(Predicate.build(predicate4))
+
+    def test_is_less_specific(self):
+        import src.entity.variable as v
+
+        variable = v.Variable('a')
+        predicate1 = Predicate.build('g(X)')
+        predicate2 = Predicate.build('g(y)')
+
+        self.assertFalse(predicate1.is_less_specific(variable))
+        self.assertFalse(predicate1.is_less_specific(predicate2))
+

@@ -1,0 +1,7 @@
+[run]
+command_line = -m unittest discover -p "*.py"
+source = src
+
+[report]
+include = src/*
+skip_empty = True
